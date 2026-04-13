@@ -1,0 +1,424 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Code Plagiarism Detector</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --primary-bg: #0f172a;
+        --glass-bg: rgba(15, 23, 42, 0.8);
+        --glass-border: rgba(99, 102, 241, 0.2);
+        --accent-purple: #6366f1;
+        --accent-purple-light: #818cf8;
+        --text-primary: #f8fafc;
+        --text-secondary: #cbd5e1;
+        --border-light: rgba(255, 255, 255, 0.1);
+        --shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        --shadow-hover: 0 35px 60px -12px rgba(0, 0, 0, 0.7);
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family:
+          "Inter",
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+        background: linear-gradient(
+          135deg,
+          var(--primary-bg) 0%,
+          #1e293b 50%,
+          #0f172a 100%
+        );
+        min-height: 100vh;
+        color: var(--text-primary);
+        overflow-x: hidden;
+      }
+
+      .container-main {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 2rem 1rem;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+
+      /* Header */
+      .header-title {
+        text-align: center;
+        margin-bottom: 1rem;
+      }
+
+      .header-title h1 {
+        font-size: clamp(2.5rem, 5vw, 3.5rem);
+        font-weight: 700;
+        background: linear-gradient(135deg, var(--accent-purple), #a5b4fc);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 0.5rem;
+      }
+
+      .header-subtitle {
+        font-size: 1.2rem;
+        color: var(--text-secondary);
+        font-weight: 400;
+      }
+
+      /* Glass Cards */
+      .glass-card {
+        background: var(--glass-bg);
+        backdrop-filter: blur(20px);
+        border: 1px solid var(--glass-border);
+        border-radius: 16px;
+        box-shadow: var(--shadow);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .glass-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          var(--accent-purple),
+          transparent
+        );
+      }
+
+      .glass-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-hover);
+        border-color: var(--accent-purple);
+      }
+
+      /* Input Section */
+      .code-input {
+        min-height: 200px;
+        background: rgba(30, 41, 59, 0.6);
+        border: 1px solid var(--border-light);
+        border-radius: 12px;
+        color: var(--text-primary);
+        font-family: "Fira Code", "Monaco", monospace;
+        font-size: 0.95rem;
+        line-height: 1.6;
+        resize: vertical;
+        transition: all 0.3s ease;
+        padding: 1.25rem;
+      }
+
+      .code-input:focus {
+        outline: none;
+        border-color: var(--accent-purple);
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        background: rgba(30, 41, 59, 0.8);
+        color: white;
+      }
+
+      .code-input::placeholder {
+        color: var(--text-secondary);
+      }
+
+      /* Upload Button */
+      .upload-btn {
+        background: linear-gradient(135deg, var(--accent-purple), #818cf8);
+        border: none;
+        border-radius: 12px;
+        padding: 1rem 2rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .upload-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 20px 40px rgba(99, 102, 241, 0.4);
+      }
+
+      .upload-btn:active {
+        transform: translateY(0);
+      }
+
+      /* Check Button */
+      .check-btn {
+        background: linear-gradient(135deg, var(--accent-purple), #a5b4fc);
+        border: none;
+        border-radius: 16px;
+        padding: 1.25rem 3rem;
+        font-size: 1.1rem;
+        font-weight: 600;
+        width: 100%;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 10px 30px rgba(99, 102, 241, 0.3);
+      }
+
+      .check-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 20px 40px rgba(99, 102, 241, 0.5);
+      }
+
+      .check-btn::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.2),
+          transparent
+        );
+        transition: left 0.5s;
+      }
+
+      .check-btn:hover::before {
+        left: 100%;
+      }
+
+      /* Result Section */
+      .result-section {
+        opacity: 0;
+        transform: translateY(20px);
+        transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .result-section.show {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      .similarity-badge {
+        background: linear-gradient(135deg, var(--accent-purple), #a5b4fc);
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 50px;
+        font-weight: 600;
+        font-size: 1.5rem;
+        box-shadow: 0 10px 30px rgba(99, 102, 241, 0.4);
+      }
+
+      /* Progress Bar */
+      .progress {
+        height: 12px;
+        border-radius: 10px;
+        background: rgba(30, 41, 59, 0.6);
+        border: 1px solid var(--border-light);
+        overflow: hidden;
+      }
+
+      .progress-bar {
+        background: linear-gradient(90deg, var(--accent-purple), #a5b4fc);
+        border-radius: 10px;
+        transition: width 1.5s ease;
+      }
+
+      /* Responsive */
+      @media (max-width: 768px) {
+        .container-main {
+          padding: 1rem;
+        }
+
+        .glass-card {
+          margin-bottom: 1.5rem;
+        }
+      }
+
+      /* Icons */
+      .upload-icon,
+      .check-icon {
+        margin-right: 0.75rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container-main">
+      <!-- Header -->
+      <div class="header-title">
+        <h1><i class="fas fa-search-code me-3"></i>Code Plagiarism Detector</h1>
+        <p class="header-subtitle mb-0">
+          Analyze code similarity using advanced algorithms
+        </p>
+      </div>
+
+      <!-- Input Section -->
+      <div class="glass-card p-4 mb-4">
+        <div class="row g-4">
+          <div class="col-lg-8">
+            <label class="form-label fw-semibold mb-2">Paste your code:</label>
+            <textarea
+              class="code-input form-control"
+              rows="8"
+              placeholder="Enter your C++, JavaScript, or HTML code here..."
+            ></textarea>
+          </div>
+          <div class="col-lg-4">
+            <label class="form-label fw-semibold mb-3 d-block"
+              >Or upload file:</label
+            >
+            <div class="d-flex flex-column h-100 justify-content-between">
+              <label
+                for="fileUpload"
+                class="upload-btn text-white mb-3 d-flex align-items-center"
+              >
+                <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                Upload File
+              </label>
+              <input
+                type="file"
+                id="fileUpload"
+                accept=".cpp,.js,.html,.py"
+                class="d-none"
+              />
+              <small class="text-muted">Supported: .cpp, .js, .html, .py</small>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Button -->
+      <div class="glass-card p-4 mb-4">
+        <button
+          class="check-btn text-white d-flex align-items-center justify-content-center"
+        >
+          <i class="fas fa-brain check-icon"></i>
+          Check Plagiarism
+        </button>
+      </div>
+
+      <!-- Result Section -->
+      <div id="resultSection" class="result-section glass-card p-5 text-center">
+        <div class="similarity-badge mb-4" id="similarityBadge">
+          Similarity: <span id="similarityPercent">78</span>%
+        </div>
+
+        <div class="progress mb-4 mx-auto" style="width: 70%">
+          <div
+            class="progress-bar"
+            role="progressbar"
+            style="width: 78%"
+            id="progressBar"
+          ></div>
+        </div>
+
+        <div class="glass-card p-3 bg-opacity-20">
+          <p class="mb-0 fw-medium" id="similarityText">
+            <i class="fas fa-file-code text-warning me-2"></i>
+            Most similar file found in dataset:
+            <strong>student_submission_124.cpp</strong>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      // FILE UPLOAD
+      document
+        .getElementById("fileUpload")
+        .addEventListener("change", function (e) {
+          const file = e.target.files[0];
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+              document.querySelector(".code-input").value = e.target.result;
+            };
+            reader.readAsText(file);
+          }
+        });
+
+      // CHECK BUTTON (CONNECTED TO BACKEND)
+      document
+        .querySelector(".check-btn")
+        .addEventListener("click", async function () {
+          const code = document.querySelector(".code-input").value;
+
+          const resultSection = document.getElementById("resultSection");
+          const similarityPercent =
+            document.getElementById("similarityPercent");
+          const progressBar = document.getElementById("progressBar");
+          const similarityText = document.getElementById("similarityText");
+
+          // ❗ VALIDATION
+          if (!code.trim()) {
+            alert("Enter code first");
+            return;
+          }
+
+          try {
+            // CALL BACKEND
+            const response = await fetch("http://127.0.0.1:5000/check", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ code: code }),
+            });
+
+            const data = await response.json();
+
+            // ❗ HANDLE BACKEND ERROR
+            if (data.error) {
+              alert(data.error);
+              return;
+            }
+
+            // ✅ UPDATE UI WITH REAL DATA
+            similarityPercent.textContent = data.similarity;
+            progressBar.style.width = data.similarity + "%";
+
+            similarityText.innerHTML = `
+        <i class="fas fa-file-code text-warning me-2"></i>
+        Most similar file: <strong>${data.file}</strong><br>
+        Detected Language: <strong>${data.language}</strong>
+      `;
+
+            // SHOW RESULT
+            resultSection.classList.add("show");
+            resultSection.scrollIntoView({ behavior: "smooth" });
+          } catch (error) {
+            alert("Server error. Make sure backend is running.");
+          }
+        });
+
+      // AUTO RESIZE TEXTAREA
+      document
+        .querySelector(".code-input")
+        .addEventListener("input", function () {
+          this.style.height = "auto";
+          this.style.height = this.scrollHeight + "px";
+        });
+    </script>
+  </body>
+</html>
